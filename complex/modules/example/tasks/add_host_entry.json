@@ -1,0 +1,11 @@
+{
+  "puppet_task_version": 1,
+  "supports_noop": false,
+  "description": "A task to add a host entry to the /etc/hosts file",
+  "parameters": {
+    "host_entry": {
+      "description": "The host entry to add",
+      "type": "String"
+    }
+  }
+}

@@ -1,0 +1,30 @@
+require 'vagrant-bolt'
+Vagrant.configure("2") do |config|
+  config.vm.box = "ubuntu/trusty64"
+  config.bolt.run_as = 'root'
+
+  # Using a global bolt trigger for a plan
+  # This will fire on all machines after :up
+  config.trigger.after :up do |trigger|
+    trigger.name = "Bolt managing hosts"
+    trigger.ruby do |env, machine|
+      VagrantBolt.plan("example::add_host", env, machine, nodes: 'all', params: {host: machine.name})
+    end
+  end
+  config.trigger.before :destroy do |trigger|
+    trigger.name = "Bolt removing hosts"
+    trigger.ruby do |env, machine|
+      VagrantBolt.task("example::remove_host_entry", env, machine, nodes: 'all', params: {hostname: machine.name})
+    end
+  end
+
+  ## Server
+  config.vm.define 'server' do |node|
+    node.vm.hostname = 'server.demo'
+  end
+
+  ## Server2
+  config.vm.define 'server2' do |node|
+    node.vm.hostname = 'server2.demo'
+  end
+end

@@ -1,0 +1,7 @@
+{
+  "puppet_task_version": 1,
+  "supports_noop": false,
+  "description": "A simple task that returns a /etc/hosts style entry for the node",
+  "parameters": {
+  }
+}

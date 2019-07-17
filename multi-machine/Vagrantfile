@@ -1,0 +1,43 @@
+require 'vagrant-bolt'
+Vagrant.configure("2") do |config|
+  config.vm.box = "ubuntu/trusty64"
+  config.bolt.run_as = 'root'
+
+  # Using a global bolt trigger for a plan
+  # This will fire on all machines after :up
+  config.trigger.after :up do |trigger|
+    trigger.name = "Bolt facts after :up"
+    trigger.ruby do |env, machine|
+      VagrantBolt.plan("facts", env, machine)
+    end
+  end
+
+  ## Server
+  config.vm.define 'server' do |node|
+    # Trigger bolt using a trigger
+    node.trigger.after :up,:provision do |trigger|
+      trigger.name = "Install htop after provisioning"
+      trigger.ruby do |env, machine|
+        # Sending additional config for the task
+        VagrantBolt.task("package", env, machine, host_key_check: false, verbose: true, params: {name: "htop", action: "install"})
+      end
+    end
+  end
+
+  ## Server2
+  config.vm.define 'server2' do |node|
+    # Using the Bolt provisioner instead of a trigger
+    node.vm.provision :bolt do |bolt|
+      bolt.command = :command
+      bolt.name    = "touch /tmp/server2_active"
+      bolt.nodes   = ['server']
+    end
+    # Using a command before the machine is destroyed
+    node.trigger.before :destroy do |trigger|
+      trigger.name = "Remove file on server before destroying"
+      trigger.ruby do |env, machine|
+        VagrantBolt.command("rm -f /tmp/server2_active", env, machine, nodes: ['server'])
+      end
+    end
+  end
+end
